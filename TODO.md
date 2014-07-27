@@ -1,13 +1,1 @@
-- [ ] PDO attributes
-  How to solve this:
-```php
-$pdo = new PDO($dsn);
-```
-  Becomes
-```php
-$pdo = SandboxClasses::Instance()->PDO($dsn);
-```
-  But how to handle
-```php
-$case = PDO::ATTR_CASE;
-```
+- [ ] Fix #1 which generates a bit of a problem sonce you can't use class constants.
