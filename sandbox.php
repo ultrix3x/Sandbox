@@ -58,7 +58,7 @@ class Sandbox {
       if(file_exists($filename)) {
         $data = unserialize(file_get_contents($filename));
         if(is_array($data) && isset($data['code']) && isset($data['timestamp']) && (($data['timestamp'] + $expire) >= time())) {
-          echo "CAHCE";
+          echo "CACHE";
           return $data['code'];
         }
       }
@@ -87,6 +87,7 @@ class Sandbox {
     }
     $includeSandboxSuper = false;
     $tokens = token_get_all($code);
+    $newTokens = array();
     $lastIndex = false;
     $lastToken = null;
     foreach($tokens as $index => $token) {
@@ -97,83 +98,146 @@ class Sandbox {
         $nextIndex = false;
         $nextToken = null;
       }
-      
+
       if(is_array($token)) {
         switch($token[0]) {
           case T_VARIABLE:
             switch($token[1]) {
               case '$GLOBALS':
-                $tokens[$index][1] = 'SandboxSuper::$GLOBALS';
+                $token[1] = 'SandboxSuper::$GLOBALS';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$GLOBALS';
                 $includeSandboxSuper = true;
                 break;
               case '$_GET':
-                $tokens[$index][1] = 'SandboxSuper::$GET';
+                $token[1] = 'SandboxSuper::$GET';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$GET';
                 $includeSandboxSuper = true;
                 break;
               case '$_POST':
-                $tokens[$index][1] = 'SandboxSuper::$POST';
+                $token[1] = 'SandboxSuper::$POST';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$POST';
                 $includeSandboxSuper = true;
                 break;
               case '$_REQUEST':
-                $tokens[$index][1] = 'SandboxSuper::$REQUEST';
+                $token[1] = 'SandboxSuper::$REQUEST';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$REQUEST';
                 $includeSandboxSuper = true;
                 break;
               case '$_SESSION':
-                $tokens[$index][1] = 'SandboxSuper::$SESSION';
+                $token[1] = 'SandboxSuper::$SESSION';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$SESSION';
                 $includeSandboxSuper = true;
                 break;
               case '$_SERVER':
-                $tokens[$index][1] = 'SandboxSuper::$SERVER';
+                $token[1] = 'SandboxSuper::$SERVER';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$SERVER';
                 $includeSandboxSuper = true;
                 break;
               case '$_COOKIE':
-                $tokens[$index][1] = 'SandboxSuper::$COOKIE';
+                $token[1] = 'SandboxSuper::$COOKIE';
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxSuper::$COOKIE';
                 $includeSandboxSuper = true;
                 break;
+              default:
+                $newTokens[] = $token;
+                break;
             }
+            break;
+          case T_DOUBLE_COLON:
+            $newTokens[] = $token;
             break;
           case T_STRING:
             if(($nextToken !== null) && (!is_array($nextToken)) && ($nextToken == '(')) {
               if(!is_array($lastToken) || (is_array($lastToken) && !in_array($lastToken[0], array(T_OBJECT_OPERATOR, T_DOUBLE_COLON)))) {
-                $tokens[$index][1] = 'SandboxFunctions::Instance()->'.$token[1];
+                $token[1] = 'SandboxFunctions::Instance()->'.$token[1];
+                $newTokens[] = $token;
+//                $tokens[$index][1] = 'SandboxFunctions::Instance()->'.$token[1];
               }
+            } else {
+              $newTokens[] = $token;
             }
             break;
           case T_INCLUDE:
-            $tokens[$index][1] = 'SandboxFunctions::Instance()->doinclude';
+            $token[1] = 'SandboxFunctions::Instance()->doinclude';
+            $newTokens[] = $token;
+//            $tokens[$index][1] = 'SandboxFunctions::Instance()->doinclude';
             break;
           case T_INCLUDE_ONCE:
-            $tokens[$index][1] = 'SandboxFunctions::Instance()->doincludeonce';
+          case T_INCLUDE:
+            $token[1] = 'SandboxFunctions::Instance()->doinclude';
+            $newTokens[] = $token;
+//            $tokens[$index][1] = 'SandboxFunctions::Instance()->doincludeonce';
             break;
           case T_REQUIRE:
-            $tokens[$index][1] = 'SandboxFunctions::Instance()->dorequire';
+          case T_INCLUDE:
+            $token[1] = 'SandboxFunctions::Instance()->doinclude';
+            $newTokens[] = $token;
+//            $tokens[$index][1] = 'SandboxFunctions::Instance()->dorequire';
             break;
           case T_REQUIRE_ONCE:
-            $tokens[$index][1] = 'SandboxFunctions::Instance()->dorequireonce';
+          case T_INCLUDE:
+            $token[1] = 'SandboxFunctions::Instance()->doinclude';
+            $newTokens[] = $token;
+//            $tokens[$index][1] = 'SandboxFunctions::Instance()->dorequireonce';
             break;
           case T_WHITESPACE:
+            // Skip superfluous whitespaces
+            $ws = $token[1];
+            if(!is_array($nextToken) && in_array($nextToken, array('=', '(', ')'))) {
+              $ws = false;
+            } elseif(!is_array($lastToken) && in_array($lastToken, array('=', ';', '(', ')'))) {
+              $ws = false;
+            } elseif(preg_match('/[\n\r]/Us', $ws)) {
+              $ws = PHP_EOL;
+            } elseif(preg_match('/[\s]/Us', $ws)) {
+              $ws = ' ';
+            }
+            if($ws !== false) {
+              $token[1] = $ws;
+              $newTokens[] = $token;
+            }
+            break;
+          case T_INCLUDE:
+            $newTokens[] = $token;
             break;
           case T_OPEN_TAG_WITH_ECHO:
+          case T_ECHO:
+            $newTokens[] = $token;
             break;
           case T_OPEN_TAG:
+            $newTokens[] = $token;
             break;
           case T_CLOSE_TAG:
+            $newTokens[] = $token;
             break;
           case T_CONSTANT_ENCAPSED_STRING:
+            $newTokens[] = $token;
+            break;
+          case T_COMMENT:
+            // This code will be dropped
             break;
           default:
             $token[] = token_name($token[0]);
+            $newTokens[] = $token;
             print_r($token);
             break;
         }
       } else {
+        $newTokens[] = $token;
       }
       
       $lastIndex = $index;
       $lastToken = $token;
     }
     $compiled = '';
-    foreach($tokens as $token) {
+    foreach($newTokens as $token) {
       if(is_array($token)) {
         $compiled .= $token[1];
       } else {

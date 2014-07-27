@@ -5,6 +5,3 @@ SandboxFunctionsString::Init();
 SandboxFunctionsFileSystem::Init();
 
 echo SandboxFunctions::Instance()->crypt('Hello');
-echo PHP_EOL;
-echo PHP_EOL;
-?>

@@ -16,7 +16,7 @@ define('SANDBOX_ROOT_PATH', __DIR__.'/data/');
 define('SANDBOX_STREAM_BLOCKSIZE', 2049);
 SandboxFunctionsFileSystem::Init();
 SandboxCall::AddEvent('filename', function($filename) {
-  echo PHP_EOL.$filename.PHP_EOL;
+  echo PHP_EOL."Someone is trying to load ".$filename.PHP_EOL;
   return $filename;
 });
 
@@ -34,7 +34,3 @@ echo 'GLOBALS:'.PHP_EOL;
 print_r($GLOBALS['sandboxdata']);
 echo PHP_EOL;
 
-echo serialize(realpath_cache_get());
-echo serialize(realpath_cache_size());
-
-?>
