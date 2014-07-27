@@ -1,0 +1,10 @@
+a:2:{s:4:"code";s:428:"<?php
+SandboxFunctions::Instance()->doinclude("first");
+SandboxFunctions::Instance()->doinclude("second");
+SandboxFunctions::Instance()->doincludeonce("third");
+SandboxFunctions::Instance()->doincludeonce("fourth");
+SandboxFunctions::Instance()->dorequire("fifth");
+SandboxFunctions::Instance()->dorequire("sixth");
+SandboxFunctions::Instance()->dorequireonce("seventh");
+SandboxFunctions::Instance()->dorequireonce("eight");
+?>";s:9:"timestamp";i:1403429519;}
