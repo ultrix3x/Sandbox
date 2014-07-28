@@ -31,6 +31,22 @@ class SandboxClasses {
     return null;
   }
   
+  public static function StaticCall($class, $method) {
+    $args = func_get_args();
+    array_shift($args);
+    array_shift($args);
+    print_r($args);
+    return '*';
+  }
+  
+  public static function StaticConst($class, $const) {
+    $args = func_get_args();
+    array_shift($args);
+    array_shift($args);
+    print_r($args);
+    return '#';
+  }
+  
   public function AddClass($className, $callable) {
     static::$classes[$className] = $callable;
   }
